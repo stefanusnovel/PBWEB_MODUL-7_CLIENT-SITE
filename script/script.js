@@ -2,18 +2,20 @@
 const tombolTema = document.getElementById("btn-tema");
 
 function muatPreferensiTema(){
-    const tema  =localStorage.getItem("tema");
-    if(tema  === "dark"){
+    const tema = localStorage.getItem("tema");
+    if(tema === "dark"){
         document.body.classList.add("dark-mode");
     }
 }
+
+muatPreferensiTema();
+
 //Mendefinisikan fungsi gantiTema yang akan menambahkan atau 
 //menghapus kelas "dark-mode" pada elemen body
 function gantiTema() {
     document.body.classList.toggle("dark-mode");
-    const temaSekarang =  document.body.classList.contains("dark-mode")
-    ?   "dark"  : "light";
-    localStorage.setItem("tema",temaSekarang);
+    const temaSekarang = document.body.classList.contains("dark-mode") ? "dark" : "light";
+    localStorage.setItem("tema", temaSekarang);
 }
 
 //Menambahkan event listener pada tombolTema yang akan memanggil fungsi gantiTema saat tombol diklik
@@ -38,11 +40,17 @@ const daftarPortofolio = document.querySelector(".daftar-portofolio");
 //Mencari tombol dengan id "btn-tambah" dan menyimpannya dalam variabel tombolTambah
 const tombolTambah = document.getElementById("btn-tambah");
 
-//Menyimpan  jumlah like
-function  simpanLike(judulArtikel,jumlah){
-    const semuaLike  =JSON.parse(localStorage.getItem("semuaLike"))  || {};
+//Menyimpan jumlah like
+function simpanLike(judulArtikel, jumlah){
+    const semuaLike = JSON.parse(localStorage.getItem("semuaLike")) || {};
     semuaLike[judulArtikel] = jumlah;
-    localStorage.setItem("semuaLike",JSON.stringify(semuaLike));
+    localStorage.setItem("semuaLike", JSON.stringify(semuaLike));
+}
+
+// PERBAIKAN: Membuat fungsi ambilLike yang sebelumnya hilang
+function ambilLike(judulArtikel) {
+    const semuaLike = JSON.parse(localStorage.getItem("semuaLike")) || {};
+    return semuaLike[judulArtikel] || 0;
 }
 
 //Mendefinisikan fungsi renderItem yang akan membuat elemen artikel untuk setiap item portofolio
@@ -55,7 +63,7 @@ function renderItem(data) {
     
     //Persiapan Tombol Like 
     const tombolLike = document.createElement("button");
-    let jumlahLike = 0;
+    const jumlahLike = ambilLike(data.judul);
     tombolLike.textContent = `Like (${jumlahLike})`;
     tombolLike.dataset.like = jumlahLike;
 
@@ -98,6 +106,9 @@ if (daftarPortofolio) {
                 jumlah++;
                 e.target.dataset.like = jumlah;
                 e.target.textContent = `Like (${jumlah})`;
+
+                const judulArtikel = e.target.closest("article").querySelector("h3").textContent;
+                simpanLike(judulArtikel, jumlah);
             }
         }
     });
@@ -126,32 +137,35 @@ if (tombolTambah) {
     });
 }
 
-//Form komentar ,validasi, error di halaman, daan tombol  hapus masing-masing
+//Form komentar ,validasi, error di halaman, daan tombol hapus masing-masing
 const formKomentar = document.querySelector("#form-komentar");
 const daftarKomentar = document.querySelector("#daftar-komentar");
 const errorMessage = document.querySelector("#error-message");
-const  inputPesanKomen  = document.querySelector("#input-pesan");
+const inputPesanKomen = document.querySelector("#input-pesan");
 
-function   simpanKomentar(nama,pesan){
-    const daftar =JSON.parse(localStorage.getItem("komentar")) ||[];
-    daftar.push({nama,pesan});
-    localStorage.setItem("komentar",JSON.stringify(daftar));
+function simpanKomentar(nama, pesan){
+    const daftar = JSON.parse(localStorage.getItem("komentar")) || [];
+    daftar.push({nama, pesan});
+    localStorage.setItem("komentar", JSON.stringify(daftar));
 }
 
 function muatKomentar(){
     if(!daftarKomentar) return;
     daftarKomentar.innerHTML = "";
-    const daftar = JSON.parse(localStorage.getItem("komentar")) ||[];
+    const daftar = JSON.parse(localStorage.getItem("komentar")) || [];
     
-    daftar.forEach((k,index) => {
-        const itemKomentar =  document.createElement("li");
-        const teksKomentar =  document.createElement("span");
-        teksKomentar.textContent  =  '${k.nama}:{k.pesan}';
+    daftar.forEach((k, index) => {
+        const itemKomentar = document.createElement("li");
+        const teksKomentar = document.createElement("span");
+        
+        // PERBAIKAN: Menggunakan backtick (`) agar variabel k.nama dan k.pesan terbaca
+        teksKomentar.textContent = `${k.nama}: ${k.pesan}`;
 
-        const tombolHapusKomen  =  document.createElement("button");
-        tombolHapusKomen.textContent =  "Hapus";
-        tombolHapusKomen.classList.add =  "btn-hapus";
-        tombolHapusKomen.dataset.index = index;;
+        const tombolHapusKomen = document.createElement("button");
+        tombolHapusKomen.textContent = "Hapus";
+        tombolHapusKomen.classList.add("btn-hapus");
+        // PERBAIKAN: Menghilangkan kelebihan titik koma
+        tombolHapusKomen.dataset.index = index;
 
         itemKomentar.appendChild(teksKomentar);
         itemKomentar.appendChild(tombolHapusKomen);
@@ -173,7 +187,7 @@ if (formKomentar) {
             return;
         }
 
-        //Validasi  minimal 5 Karakter 
+        //Validasi minimal 5 Karakter 
         if (pesan.length < 5) {
             errorMessage.textContent = "Komentar terlalu pendek! Minimal 5 karakter.";
             errorMessage.classList.add("show");
@@ -183,7 +197,7 @@ if (formKomentar) {
         //Sembunyikan error jika berhasil
         errorMessage.classList.remove("show");
 
-        simpanKomentar(nama,pesan);
+        simpanKomentar(nama, pesan);
         muatKomentar();
         formKomentar.reset();
 
@@ -195,16 +209,17 @@ if (formKomentar) {
 if (daftarKomentar) {
     daftarKomentar.addEventListener("click", (e) => {
         if (e.target.tagName === "BUTTON" && e.target.classList.contains("btn-hapus")) {
-            const daftar =JSON.parse(localStorage.getItem("komentar")) ||[];
+            const daftar = JSON.parse(localStorage.getItem("komentar")) || [];
             const index = e.target.dataset.index;
-            daftar.splice(index,1);
-            localStorage.setItem("komentar",JSON.stringify(daftar));
-            muatKomentar();;
+            daftar.splice(index, 1);
+            localStorage.setItem("komentar", JSON.stringify(daftar));
+            // PERBAIKAN: Menghilangkan kelebihan titik koma
+            muatKomentar();
         }
     });
 }
 
-//Tombol hapus semua komenta
+//Tombol hapus semua komentar
 const btnHapusSemua = document.getElementById("btn-hapus-semua");
 if (btnHapusSemua) {
     btnHapusSemua.addEventListener("click", () => {
@@ -233,7 +248,6 @@ if (btnKembaliAtas) {
 }
 
 //Keyboard shortcut dark mode
-//Keyboard shortcut dark mode
 document.addEventListener("keydown", (e) => {
     //Abaikan jika sedang mengetik di kolom input atau textarea
     const sedangMengetik = ["INPUT", "TEXTAREA"].includes(e.target.tagName);
@@ -242,10 +256,10 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-const  btnReset = document.querySelector("#btn-reset");
+const btnReset = document.querySelector("#btn-reset");
 if(btnReset){
-    btnReset.addEventListener("click",() => {
-        const  konfirmasi = confirm("Hapus semua data");
+    btnReset.addEventListener("click", () => {
+        const konfirmasi = confirm("Hapus semua data");
         if(konfirmasi){
             localStorage.clear();
             location.reload();
@@ -254,33 +268,33 @@ if(btnReset){
 }
 
 if(inputPesanKomen){
-    inputPesanKomen.addEventListener("input",function(){
-        sessionStorage.setItem("draftKomentar",this.value);
+    inputPesanKomen.addEventListener("input", function(){
+        sessionStorage.setItem("draftKomentar", this.value);
     });
 
-    const  draft = sessionStorage.getItem("daftarKomentar");
+    const draft = sessionStorage.getItem("draftKomentar");
     if(draft){
-        inputPesanKomen.value =draft;
+        inputPesanKomen.value = draft;
     }
 }
 
-const btnTampilAside =document.getElementById("btn-tampil-aside");
+const btnTampilAside = document.getElementById("btn-tampil-aside");
 const sidebar = document.querySelector("aside");
 
 if(btnTampilAside && sidebar){
-    const isAsideHidden = localStorage.getItem("asideStatuus") === "true";
+    const isAsideHidden = localStorage.getItem("asideStatus") === "true";
     if(isAsideHidden){
-        sidebar.style.display =  "none";
+        sidebar.style.display = "none";
     }
 
     btnTampilAside.addEventListener("click", () => {
-        const  isHidden = sidebar.style.display === "none";
+        const isHidden = sidebar.style.display === "none";
         if(isHidden){
             sidebar.style.display = "block";
-            localStorage.setItem("asideStatus","false");
+            localStorage.setItem("asideStatus", "false");
         }else{
             sidebar.style.display = "none";
-            localStorage.setItem("asideStatus","true");
+            localStorage.setItem("asideStatus", "true");
         }
     });
 }
